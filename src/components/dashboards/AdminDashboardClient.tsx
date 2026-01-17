@@ -114,21 +114,21 @@ export default function AdminDashboardClient() {
     <DashboardShell
       roleLabel="Admin"
       title="Admin Dashboard"
-      subtitle="Approve users and review submissions"
+      subtitle="Approve users, review submissions, and manage payments"
       navItems={navItems}
       headerRight={
         <div className="flex items-center gap-3">
-          <div className="card">
-            <p className="text-sm text-[color:var(--muted)]">Pending approvals</p>
-            <p className="text-lg font-semibold">{pending.length}</p>
+          <div className="rounded-2xl border border-emerald-200/60 bg-gradient-to-br from-emerald-50 via-white to-emerald-100/40 px-4 py-3 shadow-sm">
+            <p className="text-xs uppercase tracking-widest text-emerald-700/70">Pending approvals</p>
+            <p className="text-lg font-semibold text-emerald-950">{pending.length}</p>
           </div>
-          <div className="card">
-            <p className="text-sm text-[color:var(--muted)]">Submissions</p>
-            <p className="text-lg font-semibold">{submissions.length}</p>
+          <div className="rounded-2xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50 via-white to-emerald-50 px-4 py-3 shadow-sm">
+            <p className="text-xs uppercase tracking-widest text-emerald-700/70">Submissions</p>
+            <p className="text-lg font-semibold text-emerald-950">{submissions.length}</p>
           </div>
-          <div className="card">
-            <p className="text-sm text-[color:var(--muted)]">Payments</p>
-            <p className="text-lg font-semibold">{payments.length}</p>
+          <div className="rounded-2xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50 via-white to-emerald-100/30 px-4 py-3 shadow-sm">
+            <p className="text-xs uppercase tracking-widest text-emerald-700/70">Payments</p>
+            <p className="text-lg font-semibold text-emerald-950">{payments.length}</p>
           </div>
           <button className="btn-secondary" aria-label="Notifications">
             <Bell className="h-4 w-4" />
@@ -137,10 +137,18 @@ export default function AdminDashboardClient() {
       }
     >
       <div className="card">
-        <h2 className="text-xl font-semibold">Pending Approvals</h2>
-        <div className="mt-3 space-y-2">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-semibold">Pending Approvals</h2>
+            <p className="mt-1 text-sm text-[color:var(--muted)]">Approve new users to activate their accounts.</p>
+          </div>
+          <div className="rounded-full border border-emerald-200/70 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+            Action required
+          </div>
+        </div>
+        <div className="mt-4 space-y-3">
           {pending.map((p) => (
-            <div key={p.id} className="flex items-center justify-between rounded-xl border border-[color:var(--border)] p-3">
+            <div key={p.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[color:var(--border)] bg-white/70 p-4">
               <div>
                 <p className="font-medium">{p.display_name} ({p.role})</p>
                 <p className="text-sm text-[color:var(--muted)]">{p.email}</p>
@@ -159,9 +167,10 @@ export default function AdminDashboardClient() {
 
       <div className="card">
         <h2 className="text-xl font-semibold">Task Submissions</h2>
-        <div className="mt-3 space-y-2">
+        <p className="mt-2 text-sm text-[color:var(--muted)]">Review submissions and update status.</p>
+        <div className="mt-4 space-y-3">
           {submissions.map((s) => (
-            <div key={s.id} className="rounded-2xl border border-[color:var(--border)] p-3">
+            <div key={s.id} className="rounded-2xl border border-[color:var(--border)] bg-white/70 p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">{s.tasks?.assignments?.title ?? 'Assignment'}</p>
@@ -190,9 +199,10 @@ export default function AdminDashboardClient() {
 
       <div className="card">
         <h2 className="text-xl font-semibold">Payments</h2>
-        <div className="mt-3 space-y-2">
+        <p className="mt-2 text-sm text-[color:var(--muted)]">Track all incoming payments.</p>
+        <div className="mt-4 space-y-3">
           {payments.map((p) => (
-            <div key={p.id} className="flex items-center justify-between rounded-xl border border-[color:var(--border)] p-3">
+            <div key={p.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[color:var(--border)] bg-white/70 p-4">
               <div>
                 <p className="font-medium">{p.type.toUpperCase()} • {p.currency} {p.amount}</p>
                 <p className="text-sm text-[color:var(--muted)]">Status: {p.status}</p>
@@ -206,9 +216,10 @@ export default function AdminDashboardClient() {
 
       <div className="card">
         <h2 className="text-xl font-semibold">Withdrawals</h2>
-        <div className="mt-3 space-y-2">
+        <p className="mt-2 text-sm text-[color:var(--muted)]">Approve writer payout requests.</p>
+        <div className="mt-4 space-y-3">
           {withdrawals.map((w) => (
-            <div key={w.id} className="flex items-center justify-between rounded-xl border border-[color:var(--border)] p-3">
+            <div key={w.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[color:var(--border)] bg-white/70 p-4">
               <div>
                 <p className="font-medium">KES {w.amount}</p>
                 <p className="text-sm text-[color:var(--muted)]">Status: {w.status}</p>
