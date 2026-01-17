@@ -136,105 +136,107 @@ export default function AdminDashboardClient() {
         </div>
       }
     >
-      <div className="card">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-xl font-semibold">Pending Approvals</h2>
-            <p className="mt-1 text-sm text-[color:var(--muted)]">Approve new users to activate their accounts.</p>
-          </div>
-          <div className="rounded-full border border-emerald-200/70 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-            Action required
-          </div>
-        </div>
-        <div className="mt-4 space-y-3">
-          {pending.map((p) => (
-            <div key={p.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[color:var(--border)] bg-white/70 p-4">
-              <div>
-                <p className="font-medium">{p.display_name} ({p.role})</p>
-                <p className="text-sm text-[color:var(--muted)]">{p.email}</p>
-              </div>
-              <div className="flex gap-2">
-                <button className="btn-secondary" onClick={() => setModal({ kind: 'approval', data: p })}>View</button>
-                <button className="btn-primary disabled:opacity-60" onClick={() => approve(p.id)} disabled={processingId === p.id}>
-                  {processingId === p.id ? 'Approving...' : 'Approve'}
-                </button>
-              </div>
+      <div className="grid gap-6 xl:grid-cols-2">
+        <div className="card">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-semibold">Pending Approvals</h2>
+              <p className="mt-1 text-sm text-[color:var(--muted)]">Approve new users to activate their accounts.</p>
             </div>
-          ))}
-          {pending.length === 0 && <p className="text-sm text-[color:var(--muted)]">No pending approvals.</p>}
-        </div>
-      </div>
-
-      <div className="card">
-        <h2 className="text-xl font-semibold">Task Submissions</h2>
-        <p className="mt-2 text-sm text-[color:var(--muted)]">Review submissions and update status.</p>
-        <div className="mt-4 space-y-3">
-          {submissions.map((s) => (
-            <div key={s.id} className="rounded-2xl border border-[color:var(--border)] bg-white/70 p-4">
-              <div className="flex items-center justify-between">
+            <div className="rounded-full border border-emerald-200/70 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+              Action required
+            </div>
+          </div>
+          <div className="mt-4 space-y-3">
+            {pending.map((p) => (
+              <div key={p.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[color:var(--border)] bg-white/70 p-4">
                 <div>
-                  <p className="font-medium">{s.tasks?.assignments?.title ?? 'Assignment'}</p>
-                  <p className="text-sm text-[color:var(--muted)]">Status: {s.status}</p>
+                  <p className="font-medium">{p.display_name} ({p.role})</p>
+                  <p className="text-sm text-[color:var(--muted)]">{p.email}</p>
                 </div>
                 <div className="flex gap-2">
-                  <button className="btn-secondary" onClick={() => setModal({ kind: 'submission', data: s })}>View</button>
-                  <button className="btn-primary disabled:opacity-60" onClick={() => decideSubmission(s.id, 'approve')} disabled={processingId === s.id}>
-                    {processingId === s.id ? 'Processing...' : 'Approve'}
-                  </button>
-                  <button className="btn-secondary disabled:opacity-60" onClick={() => decideSubmission(s.id, 'reject')} disabled={processingId === s.id}>
-                    {processingId === s.id ? 'Processing...' : 'Reject'}
+                  <button className="btn-secondary" onClick={() => setModal({ kind: 'approval', data: p })}>View</button>
+                  <button className="btn-primary disabled:opacity-60" onClick={() => approve(p.id)} disabled={processingId === p.id}>
+                    {processingId === p.id ? 'Approving...' : 'Approve'}
                   </button>
                 </div>
               </div>
-              {s.signedUrl && (
-                <a className="mt-2 inline-block text-sm text-[color:var(--primary)] underline" href={s.signedUrl} target="_blank" rel="noreferrer">
-                  Download submission
-                </a>
-              )}
-            </div>
-          ))}
-          {submissions.length === 0 && <p className="text-sm text-[color:var(--muted)]">No submissions yet.</p>}
+            ))}
+            {pending.length === 0 && <p className="text-sm text-[color:var(--muted)]">No pending approvals.</p>}
+          </div>
         </div>
-      </div>
 
-      <div className="card">
-        <h2 className="text-xl font-semibold">Payments</h2>
-        <p className="mt-2 text-sm text-[color:var(--muted)]">Track all incoming payments.</p>
-        <div className="mt-4 space-y-3">
-          {payments.map((p) => (
-            <div key={p.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[color:var(--border)] bg-white/70 p-4">
-              <div>
-                <p className="font-medium">{p.type.toUpperCase()} • {p.currency} {p.amount}</p>
-                <p className="text-sm text-[color:var(--muted)]">Status: {p.status}</p>
-              </div>
-              <button className="btn-secondary" onClick={() => setModal({ kind: 'payment', data: p })}>View</button>
-            </div>
-          ))}
-          {payments.length === 0 && <p className="text-sm text-[color:var(--muted)]">No payments yet.</p>}
-        </div>
-      </div>
-
-      <div className="card">
-        <h2 className="text-xl font-semibold">Withdrawals</h2>
-        <p className="mt-2 text-sm text-[color:var(--muted)]">Approve writer payout requests.</p>
-        <div className="mt-4 space-y-3">
-          {withdrawals.map((w) => (
-            <div key={w.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[color:var(--border)] bg-white/70 p-4">
-              <div>
-                <p className="font-medium">KES {w.amount}</p>
-                <p className="text-sm text-[color:var(--muted)]">Status: {w.status}</p>
-              </div>
-              <div className="flex gap-2">
-                <button className="btn-secondary" onClick={() => setModal({ kind: 'payment', data: w })}>View</button>
-                {w.status !== 'success' && (
-                  <button className="btn-primary disabled:opacity-60" onClick={() => approveWithdrawal(w.id)} disabled={processingId === w.id}>
-                    {processingId === w.id ? 'Approving...' : 'Approve'}
-                  </button>
+        <div className="card">
+          <h2 className="text-xl font-semibold">Task Submissions</h2>
+          <p className="mt-2 text-sm text-[color:var(--muted)]">Review submissions and update status.</p>
+          <div className="mt-4 space-y-3">
+            {submissions.map((s) => (
+              <div key={s.id} className="rounded-2xl border border-[color:var(--border)] bg-white/70 p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">{s.tasks?.assignments?.title ?? 'Assignment'}</p>
+                    <p className="text-sm text-[color:var(--muted)]">Status: {s.status}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button className="btn-secondary" onClick={() => setModal({ kind: 'submission', data: s })}>View</button>
+                    <button className="btn-primary disabled:opacity-60" onClick={() => decideSubmission(s.id, 'approve')} disabled={processingId === s.id}>
+                      {processingId === s.id ? 'Processing...' : 'Approve'}
+                    </button>
+                    <button className="btn-secondary disabled:opacity-60" onClick={() => decideSubmission(s.id, 'reject')} disabled={processingId === s.id}>
+                      {processingId === s.id ? 'Processing...' : 'Reject'}
+                    </button>
+                  </div>
+                </div>
+                {s.signedUrl && (
+                  <a className="mt-2 inline-block text-sm text-[color:var(--primary)] underline" href={s.signedUrl} target="_blank" rel="noreferrer">
+                    Download submission
+                  </a>
                 )}
               </div>
-            </div>
-          ))}
-          {withdrawals.length === 0 && <p className="text-sm text-[color:var(--muted)]">No withdrawal requests.</p>}
+            ))}
+            {submissions.length === 0 && <p className="text-sm text-[color:var(--muted)]">No submissions yet.</p>}
+          </div>
+        </div>
+
+        <div className="card">
+          <h2 className="text-xl font-semibold">Payments</h2>
+          <p className="mt-2 text-sm text-[color:var(--muted)]">Track all incoming payments.</p>
+          <div className="mt-4 space-y-3">
+            {payments.map((p) => (
+              <div key={p.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[color:var(--border)] bg-white/70 p-4">
+                <div>
+                  <p className="font-medium">{p.type.toUpperCase()} • {p.currency} {p.amount}</p>
+                  <p className="text-sm text-[color:var(--muted)]">Status: {p.status}</p>
+                </div>
+                <button className="btn-secondary" onClick={() => setModal({ kind: 'payment', data: p })}>View</button>
+              </div>
+            ))}
+            {payments.length === 0 && <p className="text-sm text-[color:var(--muted)]">No payments yet.</p>}
+          </div>
+        </div>
+
+        <div className="card">
+          <h2 className="text-xl font-semibold">Withdrawals</h2>
+          <p className="mt-2 text-sm text-[color:var(--muted)]">Approve writer payout requests.</p>
+          <div className="mt-4 space-y-3">
+            {withdrawals.map((w) => (
+              <div key={w.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[color:var(--border)] bg-white/70 p-4">
+                <div>
+                  <p className="font-medium">KES {w.amount}</p>
+                  <p className="text-sm text-[color:var(--muted)]">Status: {w.status}</p>
+                </div>
+                <div className="flex gap-2">
+                  <button className="btn-secondary" onClick={() => setModal({ kind: 'payment', data: w })}>View</button>
+                  {w.status !== 'success' && (
+                    <button className="btn-primary disabled:opacity-60" onClick={() => approveWithdrawal(w.id)} disabled={processingId === w.id}>
+                      {processingId === w.id ? 'Approving...' : 'Approve'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+            {withdrawals.length === 0 && <p className="text-sm text-[color:var(--muted)]">No withdrawal requests.</p>}
+          </div>
         </div>
       </div>
 
