@@ -162,13 +162,20 @@ export default function WriterDashboardClient() {
     <DashboardShell
       roleLabel="Writer"
       title="Writer Dashboard"
-      subtitle="Accept tasks and submit completed work"
+      subtitle="Manage tasks, subscriptions, and payouts"
       navItems={navItems}
       headerRight={
         <div className="flex items-center gap-3">
-          <div className="card">
-            <p className="text-sm text-[color:var(--muted)]">Daily capacity</p>
-            <p className="text-lg font-semibold">{tasksPerDay === 0 ? 'Unlimited' : `${remaining ?? 0} left`}</p>
+          <div className="rounded-2xl border border-indigo-200/40 bg-gradient-to-br from-indigo-50 via-white to-emerald-50 px-4 py-3 shadow-sm">
+            <div className="flex items-center gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-white">
+                <Briefcase className="h-4 w-4" />
+              </span>
+              <div>
+                <p className="text-xs uppercase tracking-widest text-indigo-700/70">Daily capacity</p>
+                <p className="text-sm font-semibold text-indigo-900">{tasksPerDay === 0 ? 'Unlimited' : `${remaining ?? 0} left`}</p>
+              </div>
+            </div>
           </div>
           <button className="btn-primary" onClick={() => setWithdrawOpen(true)}>Withdraw</button>
           <button className="btn-secondary" aria-label="Notifications">
@@ -178,20 +185,40 @@ export default function WriterDashboardClient() {
       }
     >
       <div className="card">
-        <h2 className="text-xl font-semibold">Subscription</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-semibold">Subscription</h2>
+            <p className="mt-1 text-sm text-[color:var(--muted)]">Choose a plan that matches your daily workload.</p>
+          </div>
+          <div className="rounded-full border border-indigo-200/50 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
+            Auto-activates on payment
+          </div>
+        </div>
         {activePlan ? (
-          <div className="mt-2 space-y-1 text-sm text-[color:var(--muted)]">
-            <p>Active Plan: <span className="font-semibold text-[color:var(--foreground)]">{activePlan}</span></p>
-            <p>Tasks/day: {tasksPerDay === 0 ? 'Unlimited' : tasksPerDay}</p>
-            <p>Completed today: {tasksToday}</p>
-            {tasksPerDay !== 0 && <p>Remaining today: {remaining ?? 0}</p>}
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-2xl border border-[color:var(--border)] bg-white/70 p-4">
+              <p className="text-xs uppercase tracking-widest text-indigo-600/70">Active plan</p>
+              <p className="mt-2 text-lg font-semibold capitalize text-slate-900">{activePlan}</p>
+            </div>
+            <div className="rounded-2xl border border-[color:var(--border)] bg-white/70 p-4">
+              <p className="text-xs uppercase tracking-widest text-indigo-600/70">Tasks/day</p>
+              <p className="mt-2 text-lg font-semibold text-slate-900">{tasksPerDay === 0 ? 'Unlimited' : tasksPerDay}</p>
+            </div>
+            <div className="rounded-2xl border border-[color:var(--border)] bg-white/70 p-4">
+              <p className="text-xs uppercase tracking-widest text-indigo-600/70">Completed</p>
+              <p className="mt-2 text-lg font-semibold text-slate-900">{tasksToday}</p>
+            </div>
+            <div className="rounded-2xl border border-[color:var(--border)] bg-white/70 p-4">
+              <p className="text-xs uppercase tracking-widest text-indigo-600/70">Remaining</p>
+              <p className="mt-2 text-lg font-semibold text-slate-900">{tasksPerDay === 0 ? 'Unlimited' : remaining ?? 0}</p>
+            </div>
           </div>
         ) : (
-          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
             {Object.entries(SUBSCRIPTION_PLANS).map(([key, v]) => (
-              <div key={key} className="rounded-2xl border border-[color:var(--border)] p-4">
-                <h3 className="font-semibold capitalize">{key}</h3>
-                <p className="text-sm text-[color:var(--muted)]">${v.price}/month • {v.tasksPerDay === Infinity ? 'Unlimited' : v.tasksPerDay} tasks/day</p>
+              <div key={key} className="rounded-2xl border border-[color:var(--border)] bg-white/70 p-4 shadow-sm">
+                <h3 className="text-lg font-semibold capitalize text-slate-900">{key}</h3>
+                <p className="mt-1 text-sm text-[color:var(--muted)]">${v.price}/month • {v.tasksPerDay === Infinity ? 'Unlimited' : v.tasksPerDay} tasks/day</p>
                 <button onClick={() => subscribe(key as SubscriptionPlan)} className="btn-primary mt-3">Choose</button>
               </div>
             ))}
@@ -213,7 +240,7 @@ export default function WriterDashboardClient() {
                 value={payPhone}
                 onChange={(e) => setPayPhone(e.target.value)}
                 placeholder="Phone e.g. +254712345678"
-                className="w-full rounded border p-3"
+                className="w-full rounded-xl border border-indigo-100 bg-indigo-50/30 p-3 focus:outline-none focus:ring-2 focus:ring-indigo-200"
               />
               <button onClick={submitPayment} className="btn-primary w-full">Pay Now</button>
             </div>
@@ -234,13 +261,13 @@ export default function WriterDashboardClient() {
                 value={withdrawAmount}
                 onChange={(e) => setWithdrawAmount(Number(e.target.value))}
                 placeholder="Amount (KES)"
-                className="w-full rounded border p-3"
+                className="w-full rounded-xl border border-indigo-100 bg-indigo-50/30 p-3 focus:outline-none focus:ring-2 focus:ring-indigo-200"
               />
               <input
                 value={withdrawPhone}
                 onChange={(e) => setWithdrawPhone(e.target.value)}
                 placeholder="Phone e.g. +254712345678"
-                className="w-full rounded border p-3"
+                className="w-full rounded-xl border border-indigo-100 bg-indigo-50/30 p-3 focus:outline-none focus:ring-2 focus:ring-indigo-200"
               />
               <button
                 onClick={async () => {
@@ -266,9 +293,10 @@ export default function WriterDashboardClient() {
       )}
       <div className="card">
         <h2 className="text-xl font-semibold">Available Assignments</h2>
-        <div className="mt-3 space-y-2">
+        <p className="mt-2 text-sm text-[color:var(--muted)]">Pick new tasks that match your expertise.</p>
+        <div className="mt-4 space-y-3">
           {openAssignments.map((a) => (
-            <div key={a.id} className="flex items-center justify-between rounded-xl border border-[color:var(--border)] p-3">
+            <div key={a.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[color:var(--border)] bg-white/70 p-4">
               <div>
                 <p className="font-medium">{a.title}</p>
                 <p className="text-sm text-[color:var(--muted)]">{a.description}</p>
@@ -282,9 +310,10 @@ export default function WriterDashboardClient() {
 
       <div className="card">
         <h2 className="text-xl font-semibold">My Tasks</h2>
-        <div className="mt-3 space-y-3">
+        <p className="mt-2 text-sm text-[color:var(--muted)]">Submit completed work for admin review.</p>
+        <div className="mt-4 space-y-3">
           {myTasks.map((t) => (
-            <div key={t.id} className="rounded-2xl border border-[color:var(--border)] p-3">
+            <div key={t.id} className="rounded-2xl border border-[color:var(--border)] bg-white/70 p-4">
               <div className="flex items-center justify-between">
                 <p className="font-medium">{t.assignments?.title ?? 'Assignment'}</p>
                 <span className="badge-pending">{t.status}</span>
@@ -300,7 +329,7 @@ export default function WriterDashboardClient() {
                     />
                   </label>
                   <textarea
-                    className="rounded border p-2"
+                    className="rounded-xl border border-indigo-100 bg-indigo-50/30 p-3 focus:outline-none focus:ring-2 focus:ring-indigo-200"
                     placeholder="Notes for admin (optional)"
                     value={taskNotes[t.id] ?? ''}
                     onChange={(e) => setTaskNotes((prev) => ({ ...prev, [t.id]: e.target.value }))}
