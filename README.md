@@ -1,40 +1,38 @@
 # EduLink Writers
 
-A web platform connecting students and writers worldwide for high-quality assignments.
+A web platform connecting students and writers worldwide for secure, high-quality assignments with role-based workflows, approvals, and payments.
 
 ## Tech Stack
 - Next.js (App Router) + TypeScript + Tailwind CSS
 - Supabase (Auth, Database, Storage)
-- M-Pesa (Kenya) and M-Pesa Global (International) integrations (stubbed)
+- Lipana STK Push (Kenya) + Global checkout stub
 
 ## Features
-- Roles: Student, Writer, Admin
-- Admin approves registrations
-- Student wallet top-up (M-Pesa or card via Global)
-- Assignment uploads to Supabase Storage
-- Writer subscriptions: Basic ($5, 5/day), Standard ($10, 15/day), Premium ($20, unlimited)
+- Roles: Student, Writer, Admin with server-side guards
+- Admin approvals for new users
+- Student wallet top-up via Lipana (Kenya) and global checkout stub
+- Assignment uploads (Supabase Storage)
+- Writer subscriptions with task limits
+- Writer task acceptance and submissions flow
+- Admin review/approve submissions
+- Writer withdrawal requests and admin approval
+- Dashboards for student, writer, and admin
+- About, Contact, Privacy pages
 
 ## Setup
 
 1. Create a Supabase project and get URL and anon key.
-2. Copy `.env.local.example` to `.env.local` and fill values:
+2. Create `.env.local` in the project root with the following values:
 ```
 NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=...
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
-MPESA_ENV=sandbox
-MPESA_CONSUMER_KEY=...
-MPESA_CONSUMER_SECRET=...
-MPESA_SHORTCODE=...
-MPESA_PASSKEY=...
-MPESA_CALLBACK_PATH=/api/payments/webhook
-MPESA_GLOBAL_API_KEY=...
-MPESA_GLOBAL_MERCHANT_ID=...
-MPESA_GLOBAL_ENV=sandbox
+LIPANA_SECRET_KEY=...
+LIPANA_WEBHOOK_SECRET=...
 ```
 3. Apply SQL schema in `supabase/schema.sql` via Supabase SQL editor.
-4. Create a Storage bucket named `assignments` and configure RLS policies per your org.
+4. Create Storage buckets named `assignments` and `submissions` and apply the storage policies in the schema.
 
 ## Development
 
@@ -48,20 +46,20 @@ npm run dev
 Visit `http://localhost:3000`.
 
 ## Auth & Roles
-- Register at `/register` with role (student or writer). Admin users can be created manually by setting `role='admin'` and `approval_status='approved'` in `profiles`.
+- Register at `/register` with role (student or writer). Admin users can be created by setting `role='admin'` and `approval_status='approved'` in `profiles`.
 - Admin approves users at `/admin/dashboard`.
 
-## Payments (Stubs)
-- API routes exist for `M-Pesa` and `M-Pesa Global` top-ups but use development stubs by default. Replace with real integrations:
-	- `src/app/api/payments/mpesa/topup/route.ts`
-	- `src/app/api/payments/mpesa-global/topup/route.ts`
-	- `src/app/api/payments/webhook/route.ts`
+## Payments
+- Lipana STK Push: `src/app/api/payments/mpesa/topup/route.ts`
+- Global checkout stub: `src/app/api/payments/mpesa-global/topup/route.ts`
+- Webhook: `src/app/api/payments/webhook/route.ts` (activates topups and subscriptions)
 
 ## Subscriptions
-- Writers choose a plan from `/writer/dashboard`. Currently simulated as instant activation; wire to your payment gateway as needed.
+- Writers choose a plan from `/writer/dashboard`. Subscription activation occurs on webhook for Lipana transactions.
 
 ## File Uploads
-- Students upload assignment files; stored under `assignments/{userId}/{uuid-filename}`.
+- Students upload assignment files under `assignments/{userId}/{uuid-filename}`.
+- Writers upload submission files under `submissions/{writerId}/{uuid-filename}`.
 
 ## Notes
 - Enforce task-per-day limits through queries against `tasks` and active subscriptions.
