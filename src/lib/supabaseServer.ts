@@ -1,8 +1,7 @@
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 import type { SerializeOptions } from 'cookie';
-
-type CookieOptions = Partial<SerializeOptions>;
+import type { CookieOptions } from '@supabase/ssr';
 
 type CookieStoreLike = {
   get?: (name: string) => { value?: string } | undefined;
@@ -33,9 +32,13 @@ export async function createSupabaseServer() {
           if (typeof store.getAll === 'function') return store.getAll();
           return [];
         },
-        setAll(cookiesToSet: Array<{ name: string; value: string; options: CookieOptions }>) {
+        setAll(cookiesToSet: Array<{ name: string; value: string; options: Partial<SerializeOptions> }>) {
           cookiesToSet.forEach(({ name, value, options }) => {
-            setCookie(name, value, options);
+            const normalized: CookieOptions = {
+              ...options,
+              sameSite: options.sameSite === false ? undefined : options.sameSite,
+            };
+            setCookie(name, value, normalized);
           });
         },
       },
