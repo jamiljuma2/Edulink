@@ -1,15 +1,8 @@
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
+import type { SerializeOptions } from 'cookie';
 
-type CookieOptions = {
-  path?: string;
-  domain?: string;
-  maxAge?: number;
-  expires?: Date;
-  httpOnly?: boolean;
-  secure?: boolean;
-  sameSite?: 'lax' | 'strict' | 'none';
-};
+type CookieOptions = Partial<SerializeOptions>;
 
 type CookieStoreLike = {
   get?: (name: string) => { value?: string } | undefined;
