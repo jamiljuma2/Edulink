@@ -13,6 +13,7 @@ export default function LoginPage() {
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
+    if (loading) return;
     setLoading(true);
     setError(null);
     try {
@@ -48,9 +49,9 @@ export default function LoginPage() {
       if (prof.approval_status !== 'approved') {
         throw new Error('Account awaiting admin approval.');
       }
-      if (prof.role === 'student') router.push('/student/dashboard');
-      else if (prof.role === 'writer') router.push('/writer/dashboard');
-      else router.push('/admin/dashboard');
+      if (prof.role === 'student') router.replace('/student/dashboard');
+      else if (prof.role === 'writer') router.replace('/writer/dashboard');
+      else router.replace('/admin/dashboard');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Login failed';
       setError(message);
@@ -68,17 +69,35 @@ export default function LoginPage() {
             <h1 className="text-2xl font-semibold">Welcome back</h1>
             <p className="mt-1 text-sm text-[color:var(--muted)]">Sign in to manage assignments and payments.</p>
           </div>
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4" aria-busy={loading}>
             <label className="block">
               <span className="text-sm">Email</span>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1 w-full rounded-xl border border-emerald-100 bg-emerald-50/30 p-3 focus:outline-none focus:ring-2 focus:ring-emerald-300" required />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1 w-full rounded-xl border border-emerald-100 bg-emerald-50/30 p-3 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                autoComplete="email"
+                disabled={loading}
+                required
+              />
             </label>
             <label className="block">
               <span className="text-sm">Password</span>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1 w-full rounded-xl border border-emerald-100 bg-emerald-50/30 p-3 focus:outline-none focus:ring-2 focus:ring-emerald-300" required />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-1 w-full rounded-xl border border-emerald-100 bg-emerald-50/30 p-3 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                autoComplete="current-password"
+                disabled={loading}
+                required
+              />
             </label>
             {error && <p className="text-sm text-red-600">{error}</p>}
-            <button disabled={loading} className="w-full rounded-full bg-emerald-600 px-4 py-2.5 font-semibold text-white shadow-lg shadow-emerald-200 disabled:opacity-50">{loading ? 'Logging in...' : 'Login'}</button>
+            <button disabled={loading} className="w-full rounded-full bg-emerald-600 px-4 py-2.5 font-semibold text-white shadow-lg shadow-emerald-200 disabled:opacity-60">
+              {loading ? 'Signing you in...' : 'Login'}
+            </button>
           </form>
         </div>
       </div>

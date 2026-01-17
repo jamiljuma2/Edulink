@@ -21,6 +21,7 @@ export default function RegisterClient() {
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
+    if (loading) return;
     setLoading(true);
     setError(null);
     setOk(null);
@@ -47,7 +48,7 @@ export default function RegisterClient() {
       } else {
         setOk('Check your email to confirm your account. Then log in to complete setup.');
       }
-      setTimeout(() => router.push('/login'), 1500);
+      setTimeout(() => router.replace('/login'), 300);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Registration failed';
       setError(message);
@@ -65,13 +66,14 @@ export default function RegisterClient() {
             <h1 className="text-2xl font-semibold">Create your account</h1>
             <p className="mt-1 text-sm text-[color:var(--muted)]">Join as a student or writer in minutes.</p>
           </div>
-          <form onSubmit={handleRegister} className="space-y-4">
+          <form onSubmit={handleRegister} className="space-y-4" aria-busy={loading}>
             <label className="block">
               <span className="text-sm">Role</span>
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value as UserRole)}
                 className="mt-1 w-full rounded-xl border border-emerald-100 bg-emerald-50/30 p-3 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                disabled={loading}
               >
                 <option value="student">Student</option>
                 <option value="writer">Writer</option>
@@ -83,6 +85,8 @@ export default function RegisterClient() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="mt-1 w-full rounded-xl border border-emerald-100 bg-emerald-50/30 p-3 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                autoComplete="name"
+                disabled={loading}
                 required
               />
             </label>
@@ -93,6 +97,8 @@ export default function RegisterClient() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="mt-1 w-full rounded-xl border border-emerald-100 bg-emerald-50/30 p-3 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                autoComplete="email"
+                disabled={loading}
                 required
               />
             </label>
@@ -103,6 +109,8 @@ export default function RegisterClient() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1 w-full rounded-xl border border-emerald-100 bg-emerald-50/30 p-3 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                autoComplete="new-password"
+                disabled={loading}
                 required
               />
             </label>
@@ -110,9 +118,9 @@ export default function RegisterClient() {
             {ok && <p className="text-sm text-emerald-600">{ok}</p>}
             <button
               disabled={loading}
-              className="w-full rounded-full bg-emerald-600 px-4 py-2.5 font-semibold text-white shadow-lg shadow-emerald-200 disabled:opacity-50"
+              className="w-full rounded-full bg-emerald-600 px-4 py-2.5 font-semibold text-white shadow-lg shadow-emerald-200 disabled:opacity-60"
             >
-              {loading ? 'Submitting...' : 'Register'}
+              {loading ? 'Creating account...' : 'Register'}
             </button>
           </form>
         </div>
