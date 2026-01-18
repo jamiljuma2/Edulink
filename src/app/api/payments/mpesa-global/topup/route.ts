@@ -40,7 +40,11 @@ export async function POST(req: Request) {
 
   const tokenJson = await tokenRes.json().catch(() => ({}));
   if (!tokenRes.ok) {
-    return NextResponse.json({ error: tokenJson?.error_description ?? 'PayPal token error' }, { status: 400 });
+    console.error('PayPal token error', tokenJson);
+    return NextResponse.json({
+      error: tokenJson?.error_description ?? 'PayPal token error',
+      details: tokenJson,
+    }, { status: 400 });
   }
 
   const { data: txn, error: tErr } = await supabase
@@ -73,7 +77,11 @@ export async function POST(req: Request) {
 
   const orderJson = await orderRes.json().catch(() => ({}));
   if (!orderRes.ok) {
-    return NextResponse.json({ error: orderJson?.message ?? 'PayPal order error' }, { status: 400 });
+    console.error('PayPal order error', orderJson);
+    return NextResponse.json({
+      error: orderJson?.message ?? 'PayPal order error',
+      details: orderJson,
+    }, { status: 400 });
   }
 
   const approvalUrl = Array.isArray(orderJson?.links)
