@@ -39,6 +39,7 @@ export default function StudentDashboardClient() {
   const pollingRef = useRef<number | null>(null);
   const pollingTimeoutRef = useRef<number | null>(null);
   const lastWalletRef = useRef<number>(0);
+  const messageTimeoutRef = useRef<number | null>(null);
 
   function stopWalletPolling() {
     if (pollingRef.current) window.clearInterval(pollingRef.current);
@@ -54,6 +55,10 @@ export default function StudentDashboardClient() {
     }, 6000);
     pollingTimeoutRef.current = window.setTimeout(() => {
       stopWalletPolling();
+      if (stkOverlayOpen) {
+        setStkOverlayOpen(false);
+        setMessage('Payment timed out or was cancelled. Please try again.');
+      }
     }, 120000);
   }
 
@@ -84,6 +89,18 @@ export default function StudentDashboardClient() {
     })();
     return () => stopWalletPolling();
   }, [supabase]);
+
+  useEffect(() => {
+    if (!message) return;
+    if (messageTimeoutRef.current) window.clearTimeout(messageTimeoutRef.current);
+    messageTimeoutRef.current = window.setTimeout(() => {
+      setMessage(null);
+      messageTimeoutRef.current = null;
+    }, 5000);
+    return () => {
+      if (messageTimeoutRef.current) window.clearTimeout(messageTimeoutRef.current);
+    };
+  }, [message]);
 
   async function topupKenya() {
     if (!phone) {
