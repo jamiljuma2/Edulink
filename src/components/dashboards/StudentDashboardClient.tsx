@@ -33,6 +33,7 @@ export default function StudentDashboardClient() {
   const [uploading, setUploading] = useState(false);
   const [toppingUp, setToppingUp] = useState(false);
   const [payingGlobal, setPayingGlobal] = useState(false);
+  const [stkOverlayOpen, setStkOverlayOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const pollingRef = useRef<number | null>(null);
@@ -86,11 +87,12 @@ export default function StudentDashboardClient() {
       setMessage('Minimum top-up is KES 10.');
       return;
     }
-    setMessage('Initiating M-Pesa STK push...');
+    setMessage(null);
+    setStkOverlayOpen(true);
     setToppingUp(true);
     try {
       await axios.post('/api/payments/mpesa/topup', { amount, phone });
-      setMessage('Check your phone to approve payment.');
+      setMessage('STK push sent. Check your phone to approve payment.');
       startWalletPolling();
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
@@ -100,6 +102,7 @@ export default function StudentDashboardClient() {
       }
     } finally {
       setToppingUp(false);
+      setStkOverlayOpen(false);
     }
   }
 
@@ -324,6 +327,23 @@ export default function StudentDashboardClient() {
       </div>
 
       {message && <p className="text-sm text-[color:var(--muted)]">{message}</p>}
+      {stkOverlayOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-6">
+          <div className="stk-fade w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-2xl">
+            <h3 className="text-lg font-semibold text-slate-900">Check your phone — an M-Pesa prompt has been sent. Enter your PIN to complete payment.</h3>
+            <div className="mt-5 flex justify-center">
+              <span className="h-10 w-10 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-600" />
+            </div>
+          </div>
+        </div>
+      )}
+      <style jsx>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .stk-fade { animation: fadeIn 180ms ease-out; }
+      `}</style>
     </DashboardShell>
   );
 }
