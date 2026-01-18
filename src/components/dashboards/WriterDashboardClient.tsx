@@ -43,10 +43,12 @@ export default function WriterDashboardClient() {
   const [submittingTaskId, setSubmittingTaskId] = useState<string | null>(null);
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
+  const [stkOverlayOpen, setStkOverlayOpen] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState<number>(0);
   const [withdrawPhone, setWithdrawPhone] = useState('');
   const [withdrawing, setWithdrawing] = useState(false);
+  const stkTimeoutRef = useMemo(() => ({ id: null as number | null }), []);
 
   async function loadSummary() {
     const { data } = await axios.get('/api/writer/tasks/summary');
@@ -99,16 +101,24 @@ export default function WriterDashboardClient() {
     }
     if (paying) return;
     setPaying(true);
+    setStkOverlayOpen(true);
+    if (stkTimeoutRef.id) window.clearTimeout(stkTimeoutRef.id);
     try {
       await axios.post('/api/subscriptions/pay', { subscriptionId, phone: payPhone });
       setMessage('Payment initiated. Complete the STK push on your phone.');
       setPayOpen(false);
+      stkTimeoutRef.id = window.setTimeout(() => {
+        setStkOverlayOpen(false);
+        setMessage('Payment timed out or was cancelled. Please try again.');
+        stkTimeoutRef.id = null;
+      }, 120000);
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         setMessage(err.response?.data?.error ?? 'Payment initiation failed.');
       } else {
         setMessage('Payment initiation failed.');
       }
+      setStkOverlayOpen(false);
     } finally {
       setPaying(false);
     }
@@ -372,6 +382,23 @@ export default function WriterDashboardClient() {
       </div>
 
       {message && <p className="text-sm text-[color:var(--muted)]">{message}</p>}
+      {stkOverlayOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-6">
+          <div className="stk-fade w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-2xl">
+            <h3 className="text-lg font-semibold text-slate-900">Check your phone — an M-Pesa prompt has been sent. Enter your PIN to complete payment.</h3>
+            <div className="mt-5 flex justify-center">
+              <span className="h-10 w-10 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-600" />
+            </div>
+          </div>
+        </div>
+      )}
+      <style jsx>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .stk-fade { animation: fadeIn 180ms ease-out; }
+      `}</style>
     </DashboardShell>
   );
 }
