@@ -16,10 +16,6 @@ export async function POST(req: Request) {
   if (profile.approval_status !== 'approved') return NextResponse.json({ error: 'Approval required' }, { status: 403 });
   if (profile.role !== 'student') return NextResponse.json({ error: 'Student role required' }, { status: 403 });
 
-  // Create pending transaction
-  const { data: txn, error: tErr } = await supabase.from('transactions').insert({ user_id: user.id, type: 'topup', amount, currency: 'KES', status: 'pending' }).select('*').single();
-  if (tErr) return NextResponse.json({ error: tErr.message }, { status: 400 });
-
   const lipanaKey = process.env.LIPANA_SECRET_KEY;
   if (!lipanaKey) {
     return NextResponse.json({ error: 'Lipana secret key missing' }, { status: 500 });
@@ -46,7 +42,16 @@ export async function POST(req: Request) {
   }
 
   const transactionId = payload?.data?.transactionId ?? payload?.data?.transaction_id;
-  await supabase.from('transactions').update({ status: 'pending', reference: transactionId, meta: payload }).eq('id', txn.id);
+  const { error: tErr } = await supabase.from('transactions').insert({
+    user_id: user.id,
+    type: 'topup',
+    amount,
+    currency: 'KES',
+    status: 'pending',
+    reference: transactionId,
+    meta: payload,
+  });
+  if (tErr) return NextResponse.json({ error: tErr.message }, { status: 400 });
 
   return NextResponse.json({ ok: true, lipana: payload });
 }
