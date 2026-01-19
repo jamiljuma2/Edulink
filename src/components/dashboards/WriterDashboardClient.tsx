@@ -387,7 +387,13 @@ export default function WriterDashboardClient() {
         </div>
       </div>
 
-      {message && <p className="text-sm text-[color:var(--muted)]">{message}</p>}
+      {message && (
+        <div className="fixed top-6 left-1/2 z-[9999] w-[90%] max-w-lg -translate-x-1/2">
+          <div className="rounded-2xl border border-emerald-200/60 bg-white px-4 py-3 text-center text-sm text-slate-700 shadow-lg">
+            {message}
+          </div>
+        </div>
+      )}
       {stkOverlayOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-6">
           <div className="stk-fade w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-2xl">
