@@ -53,5 +53,5 @@ export async function POST(req: Request) {
   });
   if (tErr) return NextResponse.json({ error: tErr.message }, { status: 400 });
 
-  return NextResponse.json({ ok: true, lipana: payload });
+  return NextResponse.json({ ok: true, lipana: payload, reference: transactionId });
 }

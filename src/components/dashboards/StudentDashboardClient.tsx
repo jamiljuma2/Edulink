@@ -34,18 +34,25 @@ export default function StudentDashboardClient() {
   const [toppingUp, setToppingUp] = useState(false);
   const [payingGlobal, setPayingGlobal] = useState(false);
   const [stkOverlayOpen, setStkOverlayOpen] = useState(false);
+  const [stkReference, setStkReference] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const pollingRef = useRef<number | null>(null);
   const pollingTimeoutRef = useRef<number | null>(null);
   const lastWalletRef = useRef<number>(0);
   const messageTimeoutRef = useRef<number | null>(null);
+  const stkStatusRef = useRef<number | null>(null);
 
   function stopWalletPolling() {
     if (pollingRef.current) window.clearInterval(pollingRef.current);
     if (pollingTimeoutRef.current) window.clearTimeout(pollingTimeoutRef.current);
     pollingRef.current = null;
     pollingTimeoutRef.current = null;
+  }
+
+  function stopStkStatusPolling() {
+    if (stkStatusRef.current) window.clearInterval(stkStatusRef.current);
+    stkStatusRef.current = null;
   }
 
   function startWalletPolling() {
@@ -116,8 +123,9 @@ export default function StudentDashboardClient() {
     setToppingUp(true);
     let initiated = false;
     try {
-      await axios.post('/api/payments/mpesa/topup', { amount, phone });
+      const { data } = await axios.post('/api/payments/mpesa/topup', { amount, phone });
       initiated = true;
+      setStkReference(data?.reference ?? null);
       setMessage('STK push sent. Check your phone to approve payment.');
       startWalletPolling();
     } catch (err: unknown) {
@@ -131,6 +139,32 @@ export default function StudentDashboardClient() {
       if (!initiated) setStkOverlayOpen(false);
     }
   }
+
+  useEffect(() => {
+    if (!stkReference || !stkOverlayOpen) return;
+    stopStkStatusPolling();
+    stkStatusRef.current = window.setInterval(async () => {
+      try {
+        const { data } = await axios.get(`/api/payments/status?reference=${encodeURIComponent(stkReference)}`);
+        const status = String(data?.transaction?.status ?? '').toLowerCase();
+        if (status === 'completed' || status === 'success') {
+          stopStkStatusPolling();
+          setTimeout(() => {
+            setStkOverlayOpen(false);
+            setMessage('Payment received. Wallet updated.');
+          }, 5000);
+        }
+        if (status === 'failed') {
+          stopStkStatusPolling();
+          setStkOverlayOpen(false);
+          setMessage('Payment failed. Please try again.');
+        }
+      } catch {
+        // ignore transient errors
+      }
+    }, 4000);
+    return () => stopStkStatusPolling();
+  }, [stkReference, stkOverlayOpen]);
 
   async function topupGlobal() {
     if (payingGlobal) return;
