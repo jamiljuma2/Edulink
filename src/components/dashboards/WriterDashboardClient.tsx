@@ -25,6 +25,14 @@ type EarningTask = {
   assignments?: { title: string | null } | null;
 };
 
+type Submission = {
+  id: string;
+  task_id: string;
+  status: string;
+  notes: string | null;
+  created_at: string;
+};
+
 export default function WriterDashboardClient() {
     const navItems: NavItem[] = [
       { label: 'Overview', icon: Briefcase },
@@ -58,8 +66,16 @@ export default function WriterDashboardClient() {
   const [approvedTasks, setApprovedTasks] = useState<number>(0);
   const [taskRate, setTaskRate] = useState<number>(0);
   const [earningTasks, setEarningTasks] = useState<EarningTask[]>([]);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
   const stkTimeoutRef = useMemo(() => ({ id: null as number | null }), []);
   const stkOverlayTimeoutRef = useMemo(() => ({ id: null as number | null }), []);
+  const submissionByTask = useMemo(() => {
+    const map: Record<string, Submission> = {};
+    submissions.forEach((s) => {
+      if (!map[s.task_id]) map[s.task_id] = s;
+    });
+    return map;
+  }, [submissions]);
 
   async function loadSummary() {
     const { data } = await axios.get('/api/writer/tasks/summary');
@@ -86,6 +102,11 @@ export default function WriterDashboardClient() {
     setMyTasks(data?.tasks ?? []);
   }
 
+  async function loadSubmissions() {
+    const { data } = await axios.get('/api/writer/submissions');
+    setSubmissions(data?.submissions ?? []);
+  }
+
   async function loadEarnings() {
     const { data } = await axios.get('/api/writer/earnings');
     setAvailableEarnings(Number(data?.availableEarnings ?? 0));
@@ -98,7 +119,7 @@ export default function WriterDashboardClient() {
     (async () => {
       const { data } = await supabase.auth.getUser();
       setUserId(data.user?.id ?? null);
-      await Promise.all([loadSummary(), loadOpenAssignments(), loadMyTasks(), loadEarnings()]);
+      await Promise.all([loadSummary(), loadOpenAssignments(), loadMyTasks(), loadSubmissions(), loadEarnings()]);
     })();
   }, [supabase]);
 
@@ -189,7 +210,7 @@ export default function WriterDashboardClient() {
         notes: taskNotes[taskId] ?? '',
       });
       setMessage('Submission uploaded. Awaiting admin review.');
-      await loadMyTasks();
+      await Promise.all([loadMyTasks(), loadSubmissions()]);
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         setMessage(err.response?.data?.error ?? 'Submission failed.');
@@ -421,38 +442,54 @@ export default function WriterDashboardClient() {
         <h2 className="text-xl font-semibold">My Tasks</h2>
         <p className="mt-2 text-sm text-[color:var(--muted)]">Submit completed work for admin review.</p>
         <div className="mt-4 space-y-3">
-          {myTasks.map((t) => (
-            <div key={t.id} className="rounded-2xl border border-[color:var(--border)] bg-white/70 p-4">
-              <div className="flex items-center justify-between">
-                <p className="font-medium">{t.assignments?.title ?? 'Assignment'}</p>
-                <span className="badge-pending">{t.status}</span>
-              </div>
-              {t.assignments?.due_date && (
-                <p className="mt-1 text-xs text-[color:var(--muted)]">Due: {new Date(t.assignments.due_date).toLocaleDateString()}</p>
-              )}
-              {t.status !== 'approved' && (
-                <div className="mt-3 grid gap-2">
-                  <label className="inline-flex w-fit cursor-pointer items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100">
-                    Choose file
-                    <input
-                      type="file"
-                      className="hidden"
-                      onChange={(e) => setTaskFiles((prev) => ({ ...prev, [t.id]: e.target.files?.[0] ?? null }))}
-                    />
-                  </label>
-                  <textarea
-                    className="rounded-xl border border-indigo-100 bg-indigo-50/30 p-3 focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                    placeholder="Notes for admin (optional)"
-                    value={taskNotes[t.id] ?? ''}
-                    onChange={(e) => setTaskNotes((prev) => ({ ...prev, [t.id]: e.target.value }))}
-                  />
-                  <button onClick={() => submitTask(t.id)} className="btn-primary">
-                    {submittingTaskId === t.id ? 'Submitting...' : 'Submit Completed Work'}
-                  </button>
+          {myTasks.map((t) => {
+            const latestSubmission = submissionByTask[t.id];
+            const canSubmit = ['accepted', 'working', 'rejected'].includes(t.status);
+            return (
+              <div key={t.id} className="rounded-2xl border border-[color:var(--border)] bg-white/70 p-4">
+                <div className="flex items-center justify-between">
+                  <p className="font-medium">{t.assignments?.title ?? 'Assignment'}</p>
+                  <span className="badge-pending">{t.status}</span>
                 </div>
-              )}
-            </div>
-          ))}
+                {t.assignments?.due_date && (
+                  <p className="mt-1 text-xs text-[color:var(--muted)]">Due: {new Date(t.assignments.due_date).toLocaleDateString()}</p>
+                )}
+                {latestSubmission?.status === 'rejected' && (
+                  <div className="mt-3 rounded-xl border border-rose-200/70 bg-rose-50/70 p-3 text-sm text-rose-800">
+                    <p className="font-semibold">Submission rejected.</p>
+                    <p className="text-xs text-rose-700/80">{latestSubmission?.notes || 'No admin notes provided.'}</p>
+                  </div>
+                )}
+                {t.status === 'submitted' && (
+                  <p className="mt-3 text-sm text-[color:var(--muted)]">Submission pending admin review.</p>
+                )}
+                {t.status === 'approved' && (
+                  <p className="mt-3 text-sm text-emerald-700">Approved. Added to your earnings.</p>
+                )}
+                {canSubmit && (
+                  <div className="mt-3 grid gap-2">
+                    <label className="inline-flex w-fit cursor-pointer items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100">
+                      Choose file
+                      <input
+                        type="file"
+                        className="hidden"
+                        onChange={(e) => setTaskFiles((prev) => ({ ...prev, [t.id]: e.target.files?.[0] ?? null }))}
+                      />
+                    </label>
+                    <textarea
+                      className="rounded-xl border border-indigo-100 bg-indigo-50/30 p-3 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                      placeholder="Notes for admin (optional)"
+                      value={taskNotes[t.id] ?? ''}
+                      onChange={(e) => setTaskNotes((prev) => ({ ...prev, [t.id]: e.target.value }))}
+                    />
+                    <button onClick={() => submitTask(t.id)} className="btn-primary">
+                      {submittingTaskId === t.id ? 'Submitting...' : latestSubmission?.status === 'rejected' ? 'Resubmit Work' : 'Submit Completed Work'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
           {myTasks.length === 0 && <p className="text-sm text-[color:var(--muted)]">No tasks yet.</p>}
         </div>
       </div>

@@ -24,6 +24,10 @@ export async function POST(req: Request) {
     .single();
   if (tErr || !task) return NextResponse.json({ error: 'Task not found' }, { status: 404 });
 
+  if (!['accepted', 'working', 'rejected'].includes(String(task.status))) {
+    return NextResponse.json({ error: 'Task is not eligible for submission' }, { status: 400 });
+  }
+
   const { error: sErr } = await supabase
     .from('task_submissions')
     .insert({ task_id: taskId, writer_id: user.id, storage_path: storagePath, notes, status: 'pending' });
