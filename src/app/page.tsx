@@ -95,7 +95,7 @@ export default function Home() {
           <div className="flex flex-col items-start justify-between gap-4 md:flex-row">
             <div>
               <p className="font-semibold text-[color:var(--foreground)]">EduLink Writers</p>
-              <p>support@edulinkwriters.com</p>
+              <p>edulinkwriters@gmail.com</p>
             </div>
             <div className="flex flex-wrap gap-6">
               <Link href="/login" className="hover:text-[color:var(--primary)]">Login</Link>
