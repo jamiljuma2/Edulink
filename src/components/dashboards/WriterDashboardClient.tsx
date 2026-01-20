@@ -67,6 +67,7 @@ export default function WriterDashboardClient() {
   const [taskRate, setTaskRate] = useState<number>(0);
   const [earningTasks, setEarningTasks] = useState<EarningTask[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [activeButtons, setActiveButtons] = useState<Record<string, string | null>>({});
   const stkTimeoutRef = useMemo(() => ({ id: null as number | null }), []);
   const stkOverlayTimeoutRef = useMemo(() => ({ id: null as number | null }), []);
   const submissionByTask = useMemo(() => {
@@ -76,6 +77,19 @@ export default function WriterDashboardClient() {
     });
     return map;
   }, [submissions]);
+
+  function setActive(group: string, id: string, persist = true) {
+    setActiveButtons((prev) => ({ ...prev, [group]: id }));
+    if (!persist) {
+      window.setTimeout(() => {
+        setActiveButtons((prev) => (prev[group] === id ? { ...prev, [group]: null } : prev));
+      }, 180);
+    }
+  }
+
+  function isActive(group: string, id: string) {
+    return activeButtons[group] === id;
+  }
 
   async function loadSummary() {
     const { data } = await axios.get('/api/writer/tasks/summary');
@@ -171,6 +185,7 @@ export default function WriterDashboardClient() {
 
   async function acceptAssignment(id: string) {
     setMessage(null);
+    setActive('assignments', id);
     setAcceptingId(id);
     try {
       await axios.post('/api/writer/tasks/accept', { assignmentId: id });
@@ -185,11 +200,13 @@ export default function WriterDashboardClient() {
       }
     } finally {
       setAcceptingId(null);
+      setActiveButtons((prev) => (prev.assignments === id ? { ...prev, assignments: null } : prev));
     }
   }
 
   async function submitTask(taskId: string) {
     setMessage(null);
+    setActive('tasks', taskId);
     const file = taskFiles[taskId];
     if (!file || !userId) {
       setMessage('Please attach a file before submitting.');
@@ -219,6 +236,7 @@ export default function WriterDashboardClient() {
       }
     } finally {
       setSubmittingTaskId(null);
+      setActiveButtons((prev) => (prev.tasks === taskId ? { ...prev, tasks: null } : prev));
     }
     setTaskFiles((prev) => ({ ...prev, [taskId]: null }));
     setTaskNotes((prev) => ({ ...prev, [taskId]: '' }));
@@ -244,15 +262,20 @@ export default function WriterDashboardClient() {
             </div>
           </div>
           <button
-            className="btn-primary"
+            className={`btn-primary btn-pressable ${isActive('header', 'withdraw') ? 'active' : ''}`}
             onClick={() => {
+              setActive('header', 'withdraw');
               setWithdrawAmount(Math.max(availableEarnings, 0));
               setWithdrawOpen(true);
             }}
           >
             Withdraw
           </button>
-          <button className="btn-secondary" aria-label="Notifications">
+          <button
+            className={`btn-secondary btn-pressable ${isActive('header', 'notifications') ? 'active' : ''}`}
+            aria-label="Notifications"
+            onClick={() => setActive('header', 'notifications', false)}
+          >
             <Bell className="h-4 w-4" />
           </button>
         </div>
@@ -332,7 +355,15 @@ export default function WriterDashboardClient() {
               <div key={key} className="rounded-2xl border border-[color:var(--border)] bg-white/70 p-4 shadow-sm">
                 <h3 className="text-lg font-semibold capitalize text-slate-900">{key}</h3>
                 <p className="mt-1 text-sm text-[color:var(--muted)]">${v.price}/month • {v.tasksPerDay === Infinity ? 'Unlimited' : v.tasksPerDay} tasks/day</p>
-                <button onClick={() => subscribe(key as SubscriptionPlan)} className="btn-primary mt-3">Choose</button>
+                <button
+                  onClick={() => {
+                    setActive('plans', key);
+                    subscribe(key as SubscriptionPlan);
+                  }}
+                  className={`btn-primary btn-pressable mt-3 ${isActive('plans', key) ? 'active' : ''}`}
+                >
+                  Choose
+                </button>
               </div>
             ))}
           </div>
@@ -345,7 +376,15 @@ export default function WriterDashboardClient() {
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Complete Subscription Payment</h3>
-              <button className="btn-secondary" onClick={() => setPayOpen(false)}>Close</button>
+              <button
+                className={`btn-secondary btn-pressable ${isActive('pay-modal', 'close') ? 'active' : ''}`}
+                onClick={() => {
+                  setActive('pay-modal', 'close', false);
+                  setPayOpen(false);
+                }}
+              >
+                Close
+              </button>
             </div>
             <div className="mt-4 space-y-3">
               <div className="text-sm text-[color:var(--muted)]">Amount: KES {payAmount ?? '—'}</div>
@@ -355,7 +394,14 @@ export default function WriterDashboardClient() {
                 placeholder="Phone e.g. +254712345678"
                 className="w-full rounded-xl border border-indigo-100 bg-indigo-50/30 p-3 focus:outline-none focus:ring-2 focus:ring-indigo-200"
               />
-              <button onClick={submitPayment} disabled={paying} className="btn-primary w-full disabled:opacity-60">
+              <button
+                onClick={() => {
+                  setActive('pay-modal', 'pay');
+                  submitPayment();
+                }}
+                disabled={paying}
+                className={`btn-primary btn-pressable w-full disabled:opacity-60 ${isActive('pay-modal', 'pay') ? 'active' : ''}`}
+              >
                 {paying ? 'Processing...' : 'Pay Now'}
               </button>
             </div>
@@ -368,7 +414,15 @@ export default function WriterDashboardClient() {
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Withdraw Earnings</h3>
-              <button className="btn-secondary" onClick={() => setWithdrawOpen(false)}>Close</button>
+              <button
+                className={`btn-secondary btn-pressable ${isActive('withdraw-modal', 'close') ? 'active' : ''}`}
+                onClick={() => {
+                  setActive('withdraw-modal', 'close', false);
+                  setWithdrawOpen(false);
+                }}
+              >
+                Close
+              </button>
             </div>
             <div className="mt-4 space-y-3">
               <div className="text-sm text-[color:var(--muted)]">Available: KES {availableEarnings.toFixed(2)}</div>
@@ -387,6 +441,7 @@ export default function WriterDashboardClient() {
               />
               <button
                 onClick={async () => {
+                  setActive('withdraw-modal', 'submit');
                   if (withdrawing) return;
                   if (availableEarnings <= 0 || withdrawAmount <= 0) {
                     setMessage('No approved earnings available for withdrawal.');
@@ -407,7 +462,7 @@ export default function WriterDashboardClient() {
                     setWithdrawing(false);
                   }
                 }}
-                className="btn-primary w-full disabled:opacity-60"
+                className={`btn-primary btn-pressable w-full disabled:opacity-60 ${isActive('withdraw-modal', 'submit') ? 'active' : ''}`}
                 disabled={withdrawing}
               >
                 {withdrawing ? 'Submitting...' : 'Submit Withdrawal'}
@@ -429,7 +484,11 @@ export default function WriterDashboardClient() {
                   <p className="text-xs text-[color:var(--muted)]">Due: {new Date(a.due_date).toLocaleDateString()}</p>
                 )}
               </div>
-              <button onClick={() => acceptAssignment(a.id)} disabled={acceptingId === a.id} className="btn-primary disabled:opacity-60">
+              <button
+                onClick={() => acceptAssignment(a.id)}
+                disabled={acceptingId === a.id}
+                className={`btn-primary btn-pressable disabled:opacity-60 ${isActive('assignments', a.id) ? 'active' : ''}`}
+              >
                 {acceptingId === a.id ? 'Accepting...' : 'Accept'}
               </button>
             </div>
@@ -482,7 +541,10 @@ export default function WriterDashboardClient() {
                       value={taskNotes[t.id] ?? ''}
                       onChange={(e) => setTaskNotes((prev) => ({ ...prev, [t.id]: e.target.value }))}
                     />
-                    <button onClick={() => submitTask(t.id)} className="btn-primary">
+                    <button
+                      onClick={() => submitTask(t.id)}
+                      className={`btn-primary btn-pressable ${isActive('tasks', t.id) ? 'active' : ''}`}
+                    >
                       {submittingTaskId === t.id ? 'Submitting...' : latestSubmission?.status === 'rejected' ? 'Resubmit Work' : 'Submit Completed Work'}
                     </button>
                   </div>
@@ -517,6 +579,25 @@ export default function WriterDashboardClient() {
           to { opacity: 1; transform: translateY(0); }
         }
         .stk-fade { animation: fadeIn 180ms ease-out; }
+        .btn-pressable {
+          transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease, color 120ms ease;
+          transform: translateZ(0);
+        }
+        @media (hover: hover) {
+          .btn-pressable:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 14px rgba(15, 23, 42, 0.12);
+          }
+        }
+        .btn-pressable:active {
+          transform: scale(0.97);
+        }
+        .btn-pressable.active {
+          background-color: #0f172a !important;
+          color: #ffffff !important;
+          transform: scale(0.98);
+          box-shadow: 0 4px 10px rgba(15, 23, 42, 0.18);
+        }
       `}</style>
     </DashboardShell>
   );
