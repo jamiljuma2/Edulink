@@ -24,21 +24,22 @@ export default function LoginPage() {
       let prof: Profile | null = null;
       const { data: existing } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, role, approval_status')
         .eq('id', data.user?.id)
         .maybeSingle();
       if (!existing) {
         const meta = data.user?.user_metadata ?? {};
         if (data.user?.id && meta.role) {
-          const { data: created, error: cErr } = await supabase.from('profiles').insert({
+          const { error: cErr } = await supabase.from('profiles').insert({
             id: data.user.id,
             email: data.user.email,
             display_name: meta.display_name ?? data.user.email,
             role: meta.role,
             approval_status: 'pending',
-          }).select('*').single();
+          });
           if (cErr) throw cErr;
-          prof = created;
+          router.replace('/pending');
+          return;
         } else {
           throw new Error('Profile missing and user metadata incomplete.');
         }
