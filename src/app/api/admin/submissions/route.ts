@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createSupabaseServer } from '@/lib/supabaseServer';
 import { createSupabaseAdmin } from '@/lib/supabaseAdmin';
 
-export async function GET() {
+export async function GET(req: Request) {
   const supabase = await createSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -16,11 +16,19 @@ export async function GET() {
   if (profile.approval_status !== 'approved') return NextResponse.json({ error: 'Approval required' }, { status: 403 });
   if (profile.role !== 'admin') return NextResponse.json({ error: 'Admin role required' }, { status: 403 });
 
+  const url = new URL(req.url);
+  const limitParam = Number(url.searchParams.get('limit') ?? '50');
+  const offsetParam = Number(url.searchParams.get('offset') ?? '0');
+  const limit = Number.isFinite(limitParam) ? Math.min(Math.max(limitParam, 1), 200) : 50;
+  const offset = Number.isFinite(offsetParam) ? Math.max(offsetParam, 0) : 0;
+  const to = offset + limit - 1;
+
   const admin = createSupabaseAdmin();
   const { data, error } = await admin
     .from('task_submissions')
     .select('id, status, notes, created_at, storage_path, task_id, writer_id, tasks:task_id (id, status, assignments:assignment_id (id, title, student_id, writer_id))')
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .range(offset, to);
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
 
   const submissions = await Promise.all(

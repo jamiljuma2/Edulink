@@ -146,3 +146,15 @@ create policy "read own submission files" on storage.objects
     bucket_id = 'submissions' and
     auth.uid()::text = (storage.foldername(name))[1]
   );
+
+-- Helpful indexes for scaling
+create index if not exists idx_profiles_approval_status on public.profiles (approval_status);
+create index if not exists idx_profiles_role on public.profiles (role);
+create index if not exists idx_transactions_created_at on public.transactions (created_at desc);
+create index if not exists idx_transactions_type_created_at on public.transactions (type, created_at desc);
+create index if not exists idx_tasks_writer_id on public.tasks (writer_id);
+create index if not exists idx_tasks_status on public.tasks (status);
+create index if not exists idx_task_submissions_created_at on public.task_submissions (created_at desc);
+create index if not exists idx_assignments_status on public.assignments (status);
+create index if not exists idx_assignments_student_id on public.assignments (student_id);
+create index if not exists idx_assignments_writer_id on public.assignments (writer_id);
