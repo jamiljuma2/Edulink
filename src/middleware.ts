@@ -9,9 +9,11 @@ const rateMap = new Map<string, RateEntry>();
 function getClientIp(req: NextRequest): string {
   const forwarded = req.headers.get('x-forwarded-for');
   if (forwarded) return forwarded.split(',')[0]?.trim() ?? 'unknown';
+  const cfConnecting = req.headers.get('cf-connecting-ip');
+  if (cfConnecting) return cfConnecting;
   const realIp = req.headers.get('x-real-ip');
   if (realIp) return realIp;
-  return req.ip ?? 'unknown';
+  return 'unknown';
 }
 
 function pruneExpired(now: number) {
