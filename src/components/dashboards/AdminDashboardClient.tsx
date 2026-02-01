@@ -87,7 +87,7 @@ export default function AdminDashboardClient() {
 
   async function approve(id: string) {
     setProcessingId(id);
-    await axios.post('/api/admin/approvals/approve', { userId: id });
+    await axios.post('/api/admin/approvals', { userId: id });
     setMessage('User approved');
     loadPending();
     setProcessingId(null);
