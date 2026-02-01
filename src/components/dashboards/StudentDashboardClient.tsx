@@ -26,8 +26,12 @@ export default function StudentDashboardClient() {
   const [amount, setAmount] = useState(5);
   const [phone, setPhone] = useState('');
   const [title, setTitle] = useState('');
+  const [subject, setSubject] = useState('');
+  const [citationStyle, setCitationStyle] = useState('');
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState('');
+  const [pages, setPages] = useState(1);
+  const [budget, setBudget] = useState(25);
   const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string>('');
   const [uploading, setUploading] = useState(false);
@@ -203,8 +207,8 @@ export default function StudentDashboardClient() {
       setMessage('Please log in again.');
       return;
     }
-    if (!title || !description) {
-      setMessage('Please add title and description.');
+    if (!title) {
+      setMessage('Please add an assignment title.');
       return;
     }
     if (!dueDate) {
@@ -225,7 +229,23 @@ export default function StudentDashboardClient() {
       return;
     }
     try {
-      const { data } = await axios.post('/api/student/assignment', { title, description, storage_path: path, due_date: dueDate });
+      const details = [
+        subject ? `Subject: ${subject}` : null,
+        citationStyle ? `Citation Style: ${citationStyle}` : null,
+        pages ? `Pages: ${pages}` : null,
+        budget ? `Budget: $${Number(budget).toFixed(2)}` : null,
+      ].filter(Boolean);
+      const descriptionText = description.trim();
+      const descriptionWithMeta = details.length
+        ? `${descriptionText ? `${descriptionText}\n\n` : ''}${details.join('\n')}`
+        : descriptionText;
+
+      const { data } = await axios.post('/api/student/assignment', {
+        title,
+        description: descriptionWithMeta || null,
+        storage_path: path,
+        due_date: dueDate,
+      });
       if (!data?.assignment) {
         setMessage('Failed to create assignment');
         setUploading(false);
@@ -233,8 +253,12 @@ export default function StudentDashboardClient() {
       }
       setMessage('Assignment uploaded successfully.');
       setTitle('');
+      setSubject('');
+      setCitationStyle('');
       setDescription('');
       setDueDate('');
+      setPages(1);
+      setBudget(25);
       setFile(null);
       setFileName('');
       await loadAssignments();
@@ -268,7 +292,7 @@ export default function StudentDashboardClient() {
               </div>
             </div>
           </div>
-          <button className="btn-secondary" aria-label="Notifications">
+          <button className="btn-secondary transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-[0.98]" aria-label="Notifications">
             <Bell className="h-4 w-4" />
           </button>
         </div>
@@ -307,10 +331,10 @@ export default function StudentDashboardClient() {
             </label>
           </div>
           <div className="mt-4 flex flex-wrap gap-3">
-            <button onClick={topupKenya} disabled={toppingUp} className="btn-primary disabled:opacity-60">
+            <button onClick={topupKenya} disabled={toppingUp} className="btn-primary transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-[0.98] disabled:opacity-60 disabled:shadow-none disabled:transform-none">
               {toppingUp ? 'Processing...' : 'M-Pesa (Kenya)'}
             </button>
-            <button onClick={topupGlobal} disabled={payingGlobal} className="btn-secondary disabled:opacity-60">
+            <button onClick={topupGlobal} disabled={payingGlobal} className="btn-secondary transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-[0.98] disabled:opacity-60 disabled:shadow-none disabled:transform-none">
               {payingGlobal ? 'Opening PayPal...' : 'PayPal (Global)'}
             </button>
           </div>
@@ -345,20 +369,99 @@ export default function StudentDashboardClient() {
       </div>
 
       <div className="card">
-        <h2 className="text-xl font-semibold">Upload Assignment</h2>
-        <p className="mt-2 text-sm text-[color:var(--muted)]">Add clear details so writers understand your requirements.</p>
-        <div className="mt-4 grid gap-3 lg:grid-cols-3">
-          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" className="rounded-xl border border-emerald-100 bg-emerald-50/30 p-3 focus:outline-none focus:ring-2 focus:ring-emerald-200" />
-          <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description" className="rounded-xl border border-emerald-100 bg-emerald-50/30 p-3 focus:outline-none focus:ring-2 focus:ring-emerald-200 lg:col-span-2" />
-          <input
-            type="date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-            className="rounded-xl border border-emerald-100 bg-emerald-50/30 p-3 focus:outline-none focus:ring-2 focus:ring-emerald-200"
-          />
-          <div className="flex flex-col gap-2">
-            <label className="inline-flex w-fit cursor-pointer items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100">
-              Choose file
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-semibold">Post New Assignment</h2>
+            <p className="mt-2 text-sm text-[color:var(--muted)]">Fill in the details below to post your assignment and get matched with a writer.</p>
+          </div>
+        </div>
+        <div className="mt-5 grid gap-4">
+          <label className="block">
+            <span className="text-sm font-medium">Assignment Title</span>
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g., Essay on Climate Change"
+              className="mt-2 w-full rounded-2xl border border-emerald-100 bg-white p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-200"
+            />
+          </label>
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="block">
+              <span className="text-sm font-medium">Subject</span>
+              <select
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                className="mt-2 w-full rounded-2xl border border-emerald-100 bg-white p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-200"
+              >
+                <option value="">Select subject</option>
+                <option value="Business">Business</option>
+                <option value="Computer Science">Computer Science</option>
+                <option value="Literature">Literature</option>
+                <option value="Engineering">Engineering</option>
+                <option value="Other">Other</option>
+              </select>
+            </label>
+            <label className="block">
+              <span className="text-sm font-medium">Citation Style (Optional)</span>
+              <select
+                value={citationStyle}
+                onChange={(e) => setCitationStyle(e.target.value)}
+                className="mt-2 w-full rounded-2xl border border-emerald-100 bg-white p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-200"
+              >
+                <option value="">Select style</option>
+                <option value="APA">APA</option>
+                <option value="MLA">MLA</option>
+                <option value="Chicago">Chicago</option>
+                <option value="Harvard">Harvard</option>
+                <option value="IEEE">IEEE</option>
+              </select>
+            </label>
+          </div>
+          <label className="block">
+            <span className="text-sm font-medium">Description (Optional)</span>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Provide detailed instructions for your assignment..."
+              className="mt-2 min-h-[120px] w-full rounded-2xl border border-emerald-100 bg-white p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-200"
+            />
+          </label>
+          <div className="grid gap-4 md:grid-cols-3">
+            <label className="block">
+              <span className="text-sm font-medium">Deadline</span>
+              <input
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                className="mt-2 w-full rounded-2xl border border-emerald-100 bg-white p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-200"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-medium">Pages</span>
+              <input
+                type="number"
+                min={1}
+                value={pages}
+                onChange={(e) => setPages(Number(e.target.value))}
+                className="mt-2 w-full rounded-2xl border border-emerald-100 bg-white p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-200"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-medium">Budget ($)</span>
+              <input
+                type="number"
+                min={1}
+                step={0.01}
+                value={budget}
+                onChange={(e) => setBudget(Number(e.target.value))}
+                className="mt-2 w-full rounded-2xl border border-emerald-100 bg-white p-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-200"
+              />
+            </label>
+          </div>
+          <div className="flex flex-wrap items-center gap-4">
+            <label className="inline-flex cursor-pointer items-center gap-3 rounded-2xl border border-emerald-100 bg-white px-4 py-3 text-sm font-medium shadow-sm">
+              <span className="text-[color:var(--muted)]">Attachment</span>
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">Choose file</span>
               <input
                 type="file"
                 accept=".pdf,.doc,.docx,.ppt,.pptx,.xlsx,.csv,.jpg,.jpeg,.png,.webp"
@@ -372,9 +475,27 @@ export default function StudentDashboardClient() {
             </label>
             {fileName && <span className="text-xs text-[color:var(--muted)]">Selected: {fileName}</span>}
           </div>
-          <div className="lg:col-span-3">
-            <button onClick={uploadAssignment} disabled={uploading} className="btn-primary disabled:opacity-50">
-              {uploading ? 'Uploading...' : 'Upload'}
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setTitle('');
+                setSubject('');
+                setCitationStyle('');
+                setDescription('');
+                setDueDate('');
+                setPages(1);
+                setBudget(25);
+                setFile(null);
+                setFileName('');
+              }}
+              className="btn-secondary transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-[0.98] disabled:opacity-60 disabled:shadow-none disabled:transform-none"
+              disabled={uploading}
+            >
+              Cancel
+            </button>
+            <button onClick={uploadAssignment} disabled={uploading} className="btn-primary transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:scale-[0.98] disabled:opacity-50 disabled:shadow-none disabled:transform-none">
+              {uploading ? 'Posting...' : 'Post Assignment'}
             </button>
           </div>
         </div>
