@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseServer } from '@/lib/supabaseServer';
+import { createSupabaseAdmin } from '@/lib/supabaseAdmin';
 
 export async function POST(req: Request) {
   const supabase = await createSupabaseServer();
+  const admin = createSupabaseAdmin();
   const { orderId } = await req.json();
   if (!orderId) return NextResponse.json({ error: 'orderId required' }, { status: 400 });
 
@@ -48,7 +50,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: captureJson?.message ?? 'PayPal capture failed' }, { status: 400 });
   }
 
-  const { data: txn } = await supabase
+  const { data: txn } = await admin
     .from('transactions')
     .select('*')
     .eq('reference', orderId)
@@ -57,14 +59,14 @@ export async function POST(req: Request) {
 
   if (!txn) return NextResponse.json({ error: 'Transaction not found' }, { status: 404 });
 
-  await supabase
+  await admin
     .from('transactions')
     .update({ status: 'completed', meta: { provider: 'paypal', capture: captureJson } })
     .eq('id', txn.id);
 
-  const { data: wallet } = await supabase.from('wallets').select('*').eq('user_id', txn.user_id).single();
+  const { data: wallet } = await admin.from('wallets').select('*').eq('user_id', txn.user_id).single();
   const newBal = Number(wallet?.balance ?? 0) + Number(txn.amount ?? 0);
-  await supabase.from('wallets').upsert({
+  await admin.from('wallets').upsert({
     user_id: txn.user_id,
     balance: newBal,
     currency: wallet?.currency ?? txn.currency ?? 'USD',

@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createHmac, timingSafeEqual } from 'crypto';
-import { createSupabaseServer } from '@/lib/supabaseServer';
+import { createSupabaseAdmin } from '@/lib/supabaseAdmin';
 
 export async function POST(req: Request) {
-  const supabase = await createSupabaseServer();
+  const admin = createSupabaseAdmin();
   const raw = await req.text();
   const signature = req.headers.get('x-lipana-signature');
   const webhookSecret = process.env.LIPANA_WEBHOOK_SECRET;
@@ -29,18 +29,18 @@ export async function POST(req: Request) {
 
   if (!transactionId) return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
 
-  const { data: txn } = await supabase.from('transactions').select('*').eq('reference', transactionId).single();
+  const { data: txn } = await admin.from('transactions').select('*').eq('reference', transactionId).single();
   if (!txn) return NextResponse.json({ ok: true });
 
-  await supabase.from('transactions').update({ status }).eq('id', txn.id);
+  await admin.from('transactions').update({ status }).eq('id', txn.id);
   if (status === 'completed') {
-    const { data: w } = await supabase.from('wallets').select('*').eq('user_id', txn.user_id).single();
+    const { data: w } = await admin.from('wallets').select('*').eq('user_id', txn.user_id).single();
     const newBal = Number(w?.balance ?? 0) + Number(txn.amount ?? 0);
     if (txn.type === 'topup') {
-      await supabase.from('wallets').upsert({ user_id: txn.user_id, balance: newBal, currency: w?.currency ?? 'KES' });
+      await admin.from('wallets').upsert({ user_id: txn.user_id, balance: newBal, currency: w?.currency ?? 'KES' });
     }
     if (txn.type === 'subscription' && txn.meta?.subscription_id) {
-      await supabase
+      await admin
         .from('subscriptions')
         .update({ active: true, starts_at: new Date().toISOString() })
         .eq('id', txn.meta.subscription_id);
