@@ -55,8 +55,14 @@ export default function LoginPage() {
       else if (prof.role === 'writer') router.replace('/writer/dashboard');
       else router.replace('/admin/dashboard');
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Login failed';
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === 'object' && err !== null && 'message' in err
+            ? String((err as { message?: unknown }).message)
+            : 'Login failed';
       setError(message);
+      console.error('Login error:', err);
     } finally {
       setLoading(false);
     }
