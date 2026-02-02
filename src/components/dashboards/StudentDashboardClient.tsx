@@ -90,20 +90,36 @@ export default function StudentDashboardClient() {
     }, 120000);
   }
 
-  async function loadWallet() {
-    const { data } = await axios.get('/api/student/wallet');
-    const nextBalance = Number(data?.wallet?.balance ?? 0);
-    setWallet(nextBalance);
-    if (stkOverlayOpen && nextBalance > lastWalletRef.current) {
-      setStkOverlayOpen(false);
-      setMessage('Payment received. Wallet updated.');
+  function getAxiosMessage(err: unknown, fallback: string) {
+    if (axios.isAxiosError(err)) {
+      if (!err.response) return 'Network error. Please check your connection and try again.';
+      return err.response?.data?.error ?? fallback;
     }
-    lastWalletRef.current = nextBalance;
+    return fallback;
+  }
+
+  async function loadWallet() {
+    try {
+      const { data } = await axios.get('/api/student/wallet');
+      const nextBalance = Number(data?.wallet?.balance ?? 0);
+      setWallet(nextBalance);
+      if (stkOverlayOpen && nextBalance > lastWalletRef.current) {
+        setStkOverlayOpen(false);
+        setMessage('Payment received. Wallet updated.');
+      }
+      lastWalletRef.current = nextBalance;
+    } catch (err: unknown) {
+      setMessage(getAxiosMessage(err, 'Unable to load wallet.'));
+    }
   }
 
   async function loadAssignments() {
-    const { data } = await axios.get('/api/student/assignments');
-    setAssignments(data?.assignments ?? []);
+    try {
+      const { data } = await axios.get('/api/student/assignments');
+      setAssignments(data?.assignments ?? []);
+    } catch (err: unknown) {
+      setMessage(getAxiosMessage(err, 'Unable to load assignments.'));
+    }
   }
 
   useEffect(() => {
