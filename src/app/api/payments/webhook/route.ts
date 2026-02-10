@@ -7,8 +7,8 @@ export async function POST(req: Request) {
   const admin = createSupabaseAdmin();
   const raw = await req.text();
   // Log all headers for debugging
-  const headersObj = {};
-  req.headers.forEach((value, key) => { headersObj[key] = value; });
+  const headersObj: Record<string, string> = {};
+  req.headers.forEach((value, key) => { headersObj[key as string] = value; });
   console.log('[WEBHOOK] All headers:', headersObj);
   const signature = req.headers.get('x-lipana-signature');
   const webhookSecret = process.env.LIPANA_WEBHOOK_SECRET;
