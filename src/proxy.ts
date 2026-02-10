@@ -90,9 +90,7 @@ export async function proxy(request: NextRequest) {
   }
 
   if (profile.approval_status !== 'approved') {
-    const url = request.nextUrl.clone();
-    url.pathname = '/pending';
-    return NextResponse.redirect(url);
+    // Approval check removed
   }
 
   if (pathname.startsWith('/student') && profile.role !== 'student') {

@@ -17,7 +17,7 @@ export async function getServerUserAndProfile() {
 export async function requireRole(role: UserRole) {
   const { user, profile } = await getServerUserAndProfile();
   if (!user || !profile) redirect('/login');
-  if (profile.approval_status !== 'approved') redirect('/pending');
+  // Approval check removed
   if (profile.role !== role) redirect(`/${profile.role}/dashboard`);
   return { user, profile } as const;
 }

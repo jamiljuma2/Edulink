@@ -114,14 +114,10 @@ export default function AdminDashboardClient() {
     <DashboardShell
       roleLabel="Admin"
       title="Admin Dashboard"
-      subtitle="Approve users, review submissions, and manage payments"
+      subtitle="Review submissions and manage payments"
       navItems={navItems}
       headerRight={
         <div className="flex items-center gap-3">
-          <div className="rounded-2xl border border-emerald-200/60 bg-gradient-to-br from-emerald-50 via-white to-emerald-100/40 px-4 py-3 shadow-sm">
-            <p className="text-xs uppercase tracking-widest text-emerald-700/70">Pending approvals</p>
-            <p className="text-lg font-semibold text-emerald-950">{pending.length}</p>
-          </div>
           <div className="rounded-2xl border border-emerald-200/50 bg-gradient-to-br from-emerald-50 via-white to-emerald-50 px-4 py-3 shadow-sm">
             <p className="text-xs uppercase tracking-widest text-emerald-700/70">Submissions</p>
             <p className="text-lg font-semibold text-emerald-950">{submissions.length}</p>
@@ -137,34 +133,7 @@ export default function AdminDashboardClient() {
       }
     >
       <div className="grid gap-6 xl:grid-cols-2">
-        <div className="card">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-xl font-semibold">Pending Approvals</h2>
-              <p className="mt-1 text-sm text-[color:var(--muted)]">Approve new users to activate their accounts.</p>
-            </div>
-            <div className="rounded-full border border-emerald-200/70 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-              Action required
-            </div>
-          </div>
-          <div className="mt-4 space-y-3">
-            {pending.map((p) => (
-              <div key={p.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[color:var(--border)] bg-white/70 p-4">
-                <div>
-                  <p className="font-medium">{p.display_name} ({p.role})</p>
-                  <p className="text-sm text-[color:var(--muted)]">{p.email}</p>
-                </div>
-                <div className="flex gap-2">
-                  <button className="btn-secondary" onClick={() => setModal({ kind: 'approval', data: p })}>View</button>
-                  <button className="btn-primary disabled:opacity-60" onClick={() => approve(p.id)} disabled={processingId === p.id}>
-                    {processingId === p.id ? 'Approving...' : 'Approve'}
-                  </button>
-                </div>
-              </div>
-            ))}
-            {pending.length === 0 && <p className="text-sm text-[color:var(--muted)]">No pending approvals.</p>}
-          </div>
-        </div>
+        {/* Pending approvals section removed */}
 
         <div className="card">
           <h2 className="text-xl font-semibold">Task Submissions</h2>

@@ -35,11 +35,10 @@ export default function LoginPage() {
             email: data.user.email,
             display_name: meta.display_name ?? data.user.email,
             role: meta.role,
-            approval_status: 'pending',
+            approval_status: 'approved',
           });
           if (cErr) throw cErr;
-          router.replace('/pending');
-          return;
+          // Approval check removed; proceed to dashboard
         } else {
           throw new Error('Profile missing and user metadata incomplete.');
         }
@@ -47,10 +46,7 @@ export default function LoginPage() {
         prof = existing;
       }
       if (!prof) throw new Error('Profile not found');
-      if (prof.approval_status !== 'approved') {
-        router.replace('/pending');
-        return;
-      }
+      // Approval check removed
       if (prof.role === 'student') router.replace('/student/dashboard');
       else if (prof.role === 'writer') router.replace('/writer/dashboard');
       else router.replace('/admin/dashboard');

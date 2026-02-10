@@ -42,7 +42,7 @@ export default function RegisterClient() {
       if (data.session) {
         const { error: profErr } = await supabase
           .from('profiles')
-          .insert({ id: user.id, email, display_name: name, role, approval_status: 'pending' });
+          .insert({ id: user.id, email, display_name: name, role, approval_status: 'approved' });
         if (profErr) throw profErr;
         setOk('Account created. Redirecting to login...');
       } else {
